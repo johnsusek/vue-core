@@ -15,6 +15,7 @@ import { ImportBinding } from './compileScript'
 import { isImportUsed } from './script/importUsageCheck'
 
 export const DEFAULT_FILENAME = 'anonymous.vue'
+export const allowMultipleScripts = true // Ludi
 
 export interface SFCParseOptions {
   filename?: string
@@ -68,6 +69,7 @@ export interface SFCDescriptor {
   template: SFCTemplateBlock | null
   script: SFCScriptBlock | null
   scriptSetup: SFCScriptBlock | null
+  scripts: SFCScriptBlock[] // Ludi
   styles: SFCStyleBlock[]
   customBlocks: SFCBlock[]
   cssVars: string[]
@@ -119,6 +121,7 @@ export function parse(
     template: null,
     script: null,
     scriptSetup: null,
+    scripts: [], // Ludi
     styles: [],
     customBlocks: [],
     cssVars: [],
@@ -197,6 +200,12 @@ export function parse(
         break
       case 'script':
         const scriptBlock = createBlock(node, source, pad) as SFCScriptBlock
+        // Ludi start
+        if (allowMultipleScripts) {
+          descriptor.scripts.push(scriptBlock)
+          break
+        }
+        // Ludi end
         const isSetup = !!scriptBlock.attrs.setup
         if (isSetup && !descriptor.scriptSetup) {
           descriptor.scriptSetup = scriptBlock

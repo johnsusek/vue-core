@@ -674,9 +674,16 @@ function genText(
   context.push(JSON.stringify(node.content), node)
 }
 
+function escapeBackticks(value: string) {
+  return value.replaceAll(/`/g, '\\`').replaceAll(/\$\{/g, '\\${')
+}
+
 function genExpression(node: SimpleExpressionNode, context: CodegenContext) {
-  const { content, isStatic } = node
-  context.push(isStatic ? JSON.stringify(content) : content, node)
+  // Ludi start
+  // const { content, isStatic } = node
+  let source = node.loc.source
+  context.push('`' + escapeBackticks(source) + '`', node)
+  // Ludi end
 }
 
 function genInterpolation(node: InterpolationNode, context: CodegenContext) {
@@ -691,14 +698,23 @@ function genCompoundExpression(
   node: CompoundExpressionNode,
   context: CodegenContext
 ) {
-  for (let i = 0; i < node.children!.length; i++) {
-    const child = node.children![i]
-    if (isString(child)) {
-      context.push(child)
-    } else {
-      genNode(child, context)
-    }
-  }
+  // Ludi start
+  let source = node.loc.source
+  if (node.children[0] === '$event => (')
+    source = node.children
+      .map(c => (c as ExpressionNode).loc?.source || c)
+      .join(' ')
+  return context.push('`' + escapeBackticks(source) + '`', node)
+  // Ludi end
+
+  // for (let i = 0; i < node.children!.length; i++) {
+  //   const child = node.children![i]
+  //   if (isString(child)) {
+  //     context.push(child)
+  //   } else {
+  //     genNode(child, context)
+  //   }
+  // }
 }
 
 function genExpressionAsPropertyKey(
